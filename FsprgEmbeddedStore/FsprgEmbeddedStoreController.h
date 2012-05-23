@@ -70,4 +70,6 @@
  */
 - (NSString *)storeHost;
 
+@property(nonatomic, copy) NSString* mainFrameTitle;
+
 @end

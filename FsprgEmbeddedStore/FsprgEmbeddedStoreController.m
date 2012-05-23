@@ -22,6 +22,8 @@
 
 @implementation FsprgEmbeddedStoreController
 
+@synthesize mainFrameTitle;
+
 + (void)initialize
 {
 	[WebView registerViewClass:[FsprgOrderView class]
@@ -231,6 +233,11 @@
 - (void)webView:(WebView *)sender didFailLoadWithError:(NSError *)error forFrame:(WebFrame *)frame
 {
 	[[self delegate] webView:sender didFailLoadWithError:error forFrame:frame];
+}
+
+- (void)webView:(WebView *)sender didReceiveTitle:(NSString *)title forFrame:(WebFrame *)frame
+{
+	self.mainFrameTitle = title;
 }
 
 // WebUIDelegate
