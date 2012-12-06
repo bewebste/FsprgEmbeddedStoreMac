@@ -54,6 +54,7 @@
 		[webView setFrameLoadDelegate:nil];
 		[webView setUIDelegate:nil];
 		[webView setApplicationNameForUserAgent:nil];
+		[webView setPolicyDelegate:nil];
 		[[NSNotificationCenter defaultCenter] removeObserver:self];
 		
 		[webView release];
@@ -63,6 +64,7 @@
 			[webView setPostsFrameChangedNotifications:TRUE];
 			[webView setFrameLoadDelegate:self];
 			[webView setUIDelegate:self];
+			[webView setPolicyDelegate:self];
 			[webView setApplicationNameForUserAgent:@"FSEmbeddedStore/2.0"];
 			[[NSNotificationCenter defaultCenter] addObserver:self 
 													 selector:@selector(webViewFrameChanged:) 
@@ -188,9 +190,7 @@
 	[self resizeContentDivE];
 }
 
-
-// WebFrameLoadDelegate
-
+#pragma mark --- WebFrameLoadDelegate ---
 - (void)webView:(WebView *)sender didStartProvisionalLoadForFrame:(WebFrame *)frame
 {
 }
@@ -242,6 +242,7 @@
 
 // WebUIDelegate
 
+#pragma mark --- WebUIDelegate ---
 - (void)webView:(WebView *)sender runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WebFrame *)frame
 {
 	NSRunAlertPanel(@"Alert", message, @"OK", nil, nil);
@@ -259,6 +260,18 @@
 	[window makeKeyAndOrderFront:sender];
 	
 	return subWebView;
+}
+
+#pragma mark --- WebPolicyDelegate ---
+- (void)webView:(WebView *)webView decidePolicyForNavigationAction:(NSDictionary *)actionInformation request:(NSURLRequest *)request frame:(WebFrame *)frame decisionListener:(id < WebPolicyDecisionListener >)listener
+{
+	if ([[actionInformation objectForKey:WebActionNavigationTypeKey] integerValue] == WebNavigationTypeLinkClicked)
+	{
+		[[NSWorkspace sharedWorkspace] openURL:[request URL]];
+		[listener ignore];
+	}
+	else
+		[listener use];
 }
 
 - (void)dealloc
