@@ -245,7 +245,12 @@
 #pragma mark --- WebUIDelegate ---
 - (void)webView:(WebView *)sender runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WebFrame *)frame
 {
-	NSRunAlertPanel(@"Alert", message, @"OK", nil, nil);
+	NSAlert*	alert = [[NSAlert alloc] init];
+	
+	alert.messageText = @"Alert";
+	alert.informativeText = message;
+	[alert addButtonWithTitle:@"OK"];
+	[alert runModal];
 }
 
 - (WebView *)webView:(WebView *)sender createWebViewWithRequest:(NSURLRequest *)request
