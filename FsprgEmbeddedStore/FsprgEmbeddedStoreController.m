@@ -10,14 +10,23 @@
 #import "FsprgOrderView.h"
 #import "FsprgOrderDocumentRepresentation.h"
 
+// We don't retrieve SSL certificates below OSX 10.6
+#define RETRIEVE_SSL_CERTIFICATES defined(MAC_OS_X_VERSION_10_6) && MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_6
+
 
 @interface FsprgEmbeddedStoreController (Private)
+
 - (void)setIsLoading:(BOOL)aFlag;
 - (void)setEstimatedLoadingProgress:(double)aProgress;
 - (void)setIsSecure:(BOOL)aFlag;
 - (void)setStoreHost:(NSString *)aHost;
 - (void)resizeContentDivE;
 - (void)webViewFrameChanged:(NSNotification *)aNotification;
+- (NSMutableDictionary *)hostCertificates;
+- (void)setHostCertificates:(NSMutableDictionary *)aHostCertificates;
+- (NSMapTable *)connectionsToRequests;
+- (void)setConnectionsToRequests:(NSMapTable *)aConnectionsToRequests;
+
 @end
 
 @implementation FsprgEmbeddedStoreController
@@ -38,48 +47,56 @@
 		[self setWebView:nil];
 		[self setDelegate:nil];
 		[self setStoreHost:nil];
+		[self setHostCertificates:[NSMutableDictionary dictionary]];
+#if defined(MAC_OS_X_VERSION_10_8) && MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_8
+		[self setConnectionsToRequests:[NSMapTable strongToStrongObjectsMapTable]];
+#else
+		[self setConnectionsToRequests:[NSMapTable mapTableWithStrongToStrongObjects]];
+#endif
 	}
 	return self;
 }
 
 - (WebView *)webView
 {
-    return [[webView retain] autorelease]; 
+	return [[webView retain] autorelease];
 }
 
 - (void)setWebView:(WebView *)aWebView
 {
-    if (webView != aWebView) {
+	if (webView != aWebView) {
 		[webView setPostsFrameChangedNotifications:FALSE];
 		[webView setFrameLoadDelegate:nil];
 		[webView setUIDelegate:nil];
+		[webView setResourceLoadDelegate:nil];
 		[webView setApplicationNameForUserAgent:nil];
 		[webView setPolicyDelegate:nil];
 		[[NSNotificationCenter defaultCenter] removeObserver:self];
 		
 		[webView release];
-        webView = [aWebView retain];
+		webView = [aWebView retain];
 		
 		if (webView) {
 			[webView setPostsFrameChangedNotifications:TRUE];
 			[webView setFrameLoadDelegate:self];
 			[webView setUIDelegate:self];
 			[webView setPolicyDelegate:self];
+			[webView setResourceLoadDelegate:self];
 			[webView setApplicationNameForUserAgent:@"FSEmbeddedStore/2.0"];
 			[[NSNotificationCenter defaultCenter] addObserver:self 
 													 selector:@selector(webViewFrameChanged:) 
 														 name:NSViewFrameDidChangeNotification 
-													   object:webView];
+                                                       object:webView];
 			[[NSNotificationCenter defaultCenter] addObserver:self 
 													 selector:@selector(estimatedLoadingProgressChanged:) 
 														 name:WebViewProgressStartedNotification 
-													   object:webView];
+                                                       object:webView];
 			[[NSNotificationCenter defaultCenter] addObserver:self 
 													 selector:@selector(estimatedLoadingProgressChanged:) 
 														 name:WebViewProgressEstimateChangedNotification 
-													   object:webView];
+                                                       object:webView];
 		}
-    }
+	}
 }
 
 - (id <FsprgEmbeddedStoreDelegate>)delegate
@@ -100,6 +117,9 @@
 - (void)loadWithParameters:(FsprgStoreParameters *)parameters
 {
 	NSURLRequest *urlRequest = [parameters toURLRequest];
+	if (urlRequest == nil) {
+		return;
+	}
 
 	NSArray *cookies = [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookiesForURL:[urlRequest URL]];
 	NSUInteger i, count = [cookies count];
@@ -155,33 +175,55 @@
 	// just triggering change observer
 }
 
+- (NSArray *)securityCertificates
+{
+	if ([self isSecure] == NO) {
+		return nil;
+	}
+
+	NSString *mainFrameURL = [[self webView] mainFrameURL];
+	NSString *host = [[NSURL URLWithString:mainFrameURL] host];
+	return [[self hostCertificates] objectForKey:host];
+}
+
 - (NSString *)storeHost
 {
-    return [[storeHost retain] autorelease]; 
+	return [[storeHost retain] autorelease];
 }
 
 - (void)setStoreHost:(NSString *)aHost
 {
-    if (storeHost != aHost) {
+	if (storeHost != aHost) {
 		[storeHost release];
-        storeHost = [aHost retain];
-    }
+		storeHost = [aHost retain];
+	}
 }
 
-- (void)resizeContentDivE {
+- (void)resizeContentDivE
+{
+	if ([[self delegate] respondsToSelector:@selector(shouldStoreControllerFixContentDivHeight:)]) {
+		if ([[self delegate] shouldStoreControllerFixContentDivHeight:self] == NO) {
+			return;
+		}
+	}
+	
 	DOMElement *resizableContentE = [[[[self webView] mainFrame] DOMDocument] getElementById:@"FsprgResizableContent"];
 	if(resizableContentE == nil) {
 		return;
 	}
-	
-	float windowHeight = [[self webView] frame].size.height;
-	float pageNavigationHeight = [[[[self webView] windowScriptObject] evaluateWebScript:@"document.getElementsByClassName('store-page-navigation')[0].clientHeight"] floatValue];
+
+    CGFloat windowHeight = [[self webView] frame].size.height;
+	id result = [[[self webView] windowScriptObject] evaluateWebScript:@"document.getElementsByClassName('store-page-navigation')[0].clientHeight"];
+	if (result == [WebUndefined undefined]) {
+		return;
+	}
+	float pageNavigationHeight = [(NSString *)result floatValue];
 	
 	DOMCSSStyleDeclaration *cssStyle = [[self webView] computedStyleForElement:resizableContentE pseudoElement:nil];	
 	float paddingTop = [[[cssStyle paddingBottom] substringToIndex:[[cssStyle paddingTop] length]-2] floatValue];
 	float paddingBottom = [[[cssStyle paddingBottom] substringToIndex:[[cssStyle paddingBottom] length]-2] floatValue];
-	
-	float newHeight = windowHeight - paddingTop - paddingBottom - pageNavigationHeight;
+
+    CGFloat newHeight = windowHeight - paddingTop - paddingBottom - pageNavigationHeight;
 	[[resizableContentE style] setHeight:[NSString stringWithFormat:@"%fpx", newHeight]];
 }
 
@@ -191,6 +233,35 @@
 }
 
 #pragma mark --- WebFrameLoadDelegate ---
+- (NSMutableDictionary *)hostCertificates
+{
+	return [[hostCertificates retain] autorelease];
+}
+- (void)setHostCertificates:(NSMutableDictionary *)anHostCertificates
+{
+	if (hostCertificates != anHostCertificates) {
+		[anHostCertificates retain];
+		[hostCertificates release];
+		hostCertificates = anHostCertificates;
+	}
+}
+
+- (NSMapTable *)connectionsToRequests
+{
+	return [[connectionsToRequests retain] autorelease];
+}
+- (void)setConnectionsToRequests:(NSMapTable *)aConnectionsToRequests
+{
+	if (connectionsToRequests != aConnectionsToRequests) {
+		[aConnectionsToRequests retain];
+		[connectionsToRequests release];
+		connectionsToRequests = aConnectionsToRequests;
+	}
+}
+
+
+#pragma mark - WebFrameLoadDelegate
+
 - (void)webView:(WebView *)sender didStartProvisionalLoadForFrame:(WebFrame *)frame
 {
 }
@@ -241,16 +312,17 @@
 }
 
 // WebUIDelegate
-
 #pragma mark --- WebUIDelegate ---
 - (void)webView:(WebView *)sender runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WebFrame *)frame
 {
-	NSAlert*	alert = [[NSAlert alloc] init];
-	
-	alert.messageText = @"Alert";
-	alert.informativeText = message;
-	[alert addButtonWithTitle:@"OK"];
-	[alert runModal];
+	NSString *title = [sender mainFrameTitle];
+	NSAlert *alertPanel = [NSAlert alertWithMessageText:title defaultButton:@"OK" alternateButton:nil otherButton:nil informativeTextWithFormat:@"%@", message];
+	[alertPanel beginSheetModalForWindow:[sender window] modalDelegate:nil didEndSelector:NULL contextInfo:NULL];
+}
+
+- (NSUInteger)webView:(WebView *)sender dragDestinationActionMaskForDraggingInfo:(id <NSDraggingInfo>)draggingInfo
+{
+	return WebDragDestinationActionNone;
 }
 
 - (WebView *)webView:(WebView *)sender createWebViewWithRequest:(NSURLRequest *)request
@@ -279,13 +351,85 @@
 		[listener use];
 }
 
+#pragma mark - WebResourceLoadDelegate
+
+- (NSURLRequest *)webView:(WebView *)sender resource:(id)identifier willSendRequest:(NSURLRequest *)request redirectResponse:(NSURLResponse *)redirectResponse fromDataSource:(WebDataSource *)dataSource
+{
+#if RETRIEVE_SSL_CERTIFICATES
+	NSURL *URL = [request URL];
+	NSString *host = [URL host];
+	if ([[self hostCertificates] objectForKey:host] == nil)
+	{
+		NSURLConnection *connection = [[[NSURLConnection alloc] initWithRequest:request delegate:self] autorelease];
+		[[self connectionsToRequests] setObject:request forKey:connection];
+	}
+#endif
+	return request;
+}
+
+#pragma mark - NURLConnection delegate
+
+#if RETRIEVE_SSL_CERTIFICATES
+- (NSCachedURLResponse *)connection:(NSURLConnection *)connection willCacheResponse:(NSCachedURLResponse *)cachedResponse
+{
+	return cachedResponse;
+}
+
+- (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response
+{
+}
+
+- (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
+{
+}
+
+- (NSURLRequest *)connection:(NSURLConnection *)connection willSendRequest:(NSURLRequest *)request redirectResponse:(NSURLResponse *)redirectResponse
+{
+	return request;
+}
+
+- (void)connectionDidFinishLoading:(NSURLConnection *)connection
+{
+	[[self connectionsToRequests] setObject:nil forKey:connection];
+}
+
+- (BOOL)connection:(NSURLConnection *)connection canAuthenticateAgainstProtectionSpace:(NSURLProtectionSpace *)protectionSpace
+{
+	return YES;
+}
+
+- (void)connection:(NSURLConnection *)connection didReceiveAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge;
+{
+	SecTrustRef trustRef = [[challenge protectionSpace] serverTrust];
+	SecTrustResultType resultType;
+	SecTrustEvaluate(trustRef, &resultType);
+	NSUInteger count = (NSUInteger)SecTrustGetCertificateCount(trustRef);
+
+    NSMutableArray *certificates = [NSMutableArray arrayWithCapacity:count];
+	CFIndex idx;
+	for (idx = 0; idx < (CFIndex)count; idx++) {
+		SecCertificateRef certificateRef = SecTrustGetCertificateAtIndex(trustRef, idx);
+		[certificates addObject:(id)certificateRef];
+	}
+
+	NSURLRequest *request = [[self connectionsToRequests] objectForKey:connection];
+	NSURL *URL = [request URL];
+	NSString *host = [URL host];
+	[[self hostCertificates] setObject:certificates forKey:host];
+
+    [[challenge sender] useCredential:[NSURLCredential credentialForTrust:trustRef] forAuthenticationChallenge:challenge];
+}
+#endif
+
 - (void)dealloc
 {
-    [self setWebView:nil];
-    [self setDelegate:nil];
+	[self setWebView:nil];
+	[self setDelegate:nil];
 	[self setStoreHost:nil];
-	
-    [super dealloc];
+	[self setHostCertificates:nil];
+	[self setConnectionsToRequests:nil];
+
+	[super dealloc];
 }
 
 @end

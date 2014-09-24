@@ -15,9 +15,11 @@
  * Controller for FastSpring's embedded store.
  */
 @interface FsprgEmbeddedStoreController : NSObject {
-	WebView* webView;
-	id <FsprgEmbeddedStoreDelegate> delegate;
-	NSString *storeHost;
+    WebView* webView;
+    id <FsprgEmbeddedStoreDelegate> delegate;
+    NSString *storeHost;
+    NSMutableDictionary *hostCertificates;
+    NSMapTable *connectionsToRequests;
 }
 
 - (WebView *)webView;
@@ -63,6 +65,12 @@
  * @result TRUE if connection is secure (SSL)
  */
 - (BOOL)isSecure;
+
+/**
+ *
+ * @result NSArray containing SecCertificateRef objects for the host of the main frame, if it was loaded via https.
+ */
+- (NSArray *)securityCertificates;
 
 /*!
  * Host that delivers the store (e.g. sites.fastspring.com).

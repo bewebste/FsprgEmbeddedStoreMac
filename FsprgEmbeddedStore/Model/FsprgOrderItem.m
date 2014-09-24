@@ -67,6 +67,11 @@
 	return [[self raw] valueForKey:@"SubscriptionReference"];
 }
 
+- (NSURL *)subscriptionCustomerURL
+{
+    return [NSURL URLWithString:[[self raw] valueForKey:@"SubscriptionCustomerURL"]];
+}
+
 - (FsprgFulfillment *)fulfillment
 {
 	return [FsprgFulfillment fulfillmentWithDictionary:[[self raw] valueForKey:@"Fulfillment"]];
