@@ -245,12 +245,22 @@
 #pragma mark --- WebUIDelegate ---
 - (void)webView:(WebView *)sender runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WebFrame *)frame
 {
+	NSString *title = [sender mainFrameTitle];
 	NSAlert*	alert = [[NSAlert alloc] init];
 	
-	alert.messageText = @"Alert";
+	alert.messageText = title;
 	alert.informativeText = message;
 	[alert addButtonWithTitle:@"OK"];
-	[alert runModal];
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_9
+	[alert beginSheetModalForWindow:[sender window] completionHandler:NULL];
+#else
+	[alert beginSheetModalForWindow:[sender window] modalDelegate:nil didEndSelector:NULL contextInfo:NULL];
+#endif
+}
+
+- (NSUInteger)webView:(WebView *)sender dragDestinationActionMaskForDraggingInfo:(id <NSDraggingInfo>)draggingInfo
+{
+	return WebDragDestinationActionNone;
 }
 
 - (WebView *)webView:(WebView *)sender createWebViewWithRequest:(NSURLRequest *)request

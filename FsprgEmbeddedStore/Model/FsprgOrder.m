@@ -14,12 +14,12 @@
 + (FsprgOrder *)orderFromData:(NSData *)aData
 {
 	NSPropertyListFormat *format = nil;
-	NSString *errorDesc = nil;
+	NSError*	error = nil;
 	
-	NSDictionary *aDict = [NSPropertyListSerialization propertyListFromData:aData
-													   mutabilityOption:NSPropertyListImmutable
+	NSDictionary *aDict = [NSPropertyListSerialization propertyListWithData:aData
+													   options:NSPropertyListImmutable
 													   format:format 
-													   errorDescription:&errorDesc];
+													   error:&error];
 		
 	
 	return [[[FsprgOrder alloc] initWithDictionary:aDict] autorelease];
