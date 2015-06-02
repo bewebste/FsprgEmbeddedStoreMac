@@ -4,7 +4,7 @@
 
 FastSpring's embedded store consists of a controller with some integration points and WebKit's web view. It's thin and very flexible and lets you integrate FastSpring the way that fits best for your application.
 
-To get an idea of how it works, the SDK provides two examples and a test application. All source code is released under the [MIT license](License.txt). It is open to contributions and its use is unrestricted. See [Release Notes](RELEASE_NOTES.html) for the latest changes.
+To get an idea of how it works, the SDK provides two examples and a test application. All source code is released under the MIT license. It is open to contributions and its use is unrestricted. See RELEASE_NOTES.html for the latest changes.
 
 
 
@@ -48,11 +48,13 @@ In addition, it has some integration points defined by the `FsprgEmbeddedStoreDe
 
 ## How-to embed it ##
 
+Use our [CocoaPod](http://cocoapods.org/?q=fsprgembeddedstoremac) or perform the following steps.
+
 1. [Clone or fork](http://help.github.com/fork-a-repo) our repository.
 2. Open your project in Xcode.
 3. Perform File/Add Files to "Your App"... and choose the directory `FsprgEmbeddedStoreMac/FsprgEmbeddedStore`. We suggest to uncheck the option `Copy items into destination group's folder`.
 4. Delete reference to `FsprgEmbeddedStoreMac/FsprgEmbeddedStore/Tests` (in your project) if you don't need FsprgEmbeddedStore unit tests.
-5. Add WebKit.framework to your Targets.
+5. Add WebKit.framework and Security.framework to your Targets.
 
 
 ## How-to use it ##
@@ -105,7 +107,7 @@ Here's a real-life example to show the most common case of grabbing the serial n
 	   NSEnumerator *e = [[order orderItems] objectEnumerator];
 	   FsprgOrderItem *item = nil;
 	   while (item = [e nextObject]) {
-	       if ([[item productName] hasPrefix:@"MyItemNamePrefix") {
+	       if ([[item productName] hasPrefix:@"MyItemNamePrefix"]) {
 	           NSString *userName = [[item license] licenseName];
 	           NSString *serialNumber = [[item license] firstLicenseCode];
 	           if ([[[item productName] lowercaseString] rangeOfString:@"upgrade"].location != NSNotFound) {
@@ -140,6 +142,7 @@ Here's a real-life example to show the most common case of grabbing the serial n
 	- (NSNumber *)itemTotal;
 	- (NSNumber *)itemTotalUSD;
 	- (NSString *)subscriptionReference; // See https://support.fastspring.com/entries/236487-api-subscriptions
+	- (NSURL *)subscriptionCustomerURL; // This URL can be presented to the customer to manage their subscription.
 	- (FsprgFulfillment *)fulfillment;
 	- (FsprgLicense *)license;           // Shortcut for [[self fulfillment] valueForKey:@"license"]
 	- (FsprgFileDownload *)download;     // Shortcut for [[self fulfillment] valueForKey:@"download"]

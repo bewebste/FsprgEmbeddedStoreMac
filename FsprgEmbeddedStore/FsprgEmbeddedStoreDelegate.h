@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import <WebKit/WebKit.h>
 #import "FsprgStoreParameters.h"
 #import "FsprgOrder.h"
 
@@ -17,6 +18,7 @@ typedef enum {
 	FsprgPageUnknown
 } FsprgPageType;
 
+@class FsprgEmbeddedStoreController;
 
 /*!
  * Delegate protocol for FsprgEmbeddedStoreController.
@@ -65,5 +67,16 @@ typedef enum {
  * @param frame The frame being loaded. 
  */
 - (void)webView:(WebView *)sender didFailLoadWithError:(NSError *)error forFrame:(WebFrame *)frame;
+
+@optional
+/*!
+ * Gets called after loading the page and upon resizing the window.
+ * The default embedded store layout assumes that the content div's height will get shortened
+ * to make room for the navigation bar. If your layout doesn't require that assumption, you can
+ * return NO here to avoid this manual height fixing.
+ * @param controller The store controller in question
+ * @result YES if you'd like the store controller to fix the content div's height, NO otherwise.
+ */
+- (BOOL)shouldStoreControllerFixContentDivHeight:(FsprgEmbeddedStoreController *)controller;
 
 @end
