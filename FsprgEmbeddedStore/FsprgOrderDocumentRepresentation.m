@@ -54,7 +54,7 @@
 - (void)receivedData:(NSData *)aData withDataSource:(WebDataSource *)aDataSource
 {
 	[self setOrder:[FsprgOrder orderFromData:aData]];
-	FsprgEmbeddedStoreController *delegate = [[[aDataSource webFrame] webView] frameLoadDelegate];
+	FsprgEmbeddedStoreController *delegate = (FsprgEmbeddedStoreController*)[[[aDataSource webFrame] webView] frameLoadDelegate];
 	[[delegate delegate] didReceiveOrder:[self order]];
 }
 

@@ -68,7 +68,7 @@
 		FsprgOrderDocumentRepresentation *representation = (FsprgOrderDocumentRepresentation *)[[self dataSource] representation];
 		FsprgOrder *order = [representation order];
 
-		FsprgEmbeddedStoreController *delegate = [[[[self dataSource] webFrame] webView] UIDelegate];
+		FsprgEmbeddedStoreController *delegate = (FsprgEmbeddedStoreController*)[[[[self dataSource] webFrame] webView] UIDelegate];
 		NSView *newSubview = [[delegate delegate] viewWithFrame:[self frame] forOrder:order];
 		[self addSubview:newSubview];
 	}
