@@ -11,6 +11,9 @@
 #import "FsprgEmbeddedStoreDelegate.h"
 
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 /*!
  * Controller for FastSpring's embedded store.
  */
@@ -80,3 +83,5 @@
 @property(nonatomic, copy) NSString* mainFrameTitle;
 
 @end
+
+#pragma clang diagnostic pop

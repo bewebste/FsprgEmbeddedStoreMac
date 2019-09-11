@@ -18,6 +18,9 @@ typedef enum {
 	FsprgPageUnknown
 } FsprgPageType;
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 @class FsprgEmbeddedStoreController;
 
 /*!
@@ -80,3 +83,5 @@ typedef enum {
 - (BOOL)shouldStoreControllerFixContentDivHeight:(FsprgEmbeddedStoreController *)controller;
 
 @end
+
+#pragma clang diagnostic pop
