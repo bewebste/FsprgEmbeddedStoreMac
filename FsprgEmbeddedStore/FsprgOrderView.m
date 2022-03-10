@@ -10,6 +10,9 @@
 #import "FsprgOrderDocumentRepresentation.h"
 #import "FsprgEmbeddedStoreController.h"
 
+//We're still using WebView, need to rewrite using WKWebView
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
 @implementation FsprgOrderView
 
@@ -93,3 +96,5 @@
 }
 
 @end
+
+#pragma clang diagnostic pop

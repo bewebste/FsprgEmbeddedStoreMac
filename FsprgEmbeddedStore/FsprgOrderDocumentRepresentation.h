@@ -10,6 +10,9 @@
 #import <WebKit/WebKit.h>
 #import "FsprgOrder.h"
 
+//We're still using WebView, need to rewrite using WKWebView
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
 /*!
  * WebDocumentRepresentation that calls FsprgEmbeddedStoreDelegate on receiving the order.
@@ -22,3 +25,5 @@
 - (void)setOrder:(FsprgOrder *)anOrder;
 
 @end
+
+#pragma clang diagnostic pop

@@ -14,6 +14,9 @@
 //#define RETRIEVE_SSL_CERTIFICATES defined(MAC_OS_X_VERSION_10_6) && MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_6
 #define RETRIEVE_SSL_CERTIFICATES 1
 
+//We're still using WebView, need to rewrite using WKWebView
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
 @interface FsprgEmbeddedStoreController (Private)
 
@@ -380,3 +383,5 @@
 }
 
 @end
+
+#pragma clang diagnostic pop //-Wdeprecated-declarations

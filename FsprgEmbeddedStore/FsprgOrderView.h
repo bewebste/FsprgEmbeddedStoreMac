@@ -9,6 +9,9 @@
 #import <Cocoa/Cocoa.h>
 #import <WebKit/WebKit.h>
 
+//We're still using WebView, need to rewrite using WKWebView
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
 /*!
  * WebDocumentView implementation encapsulating the order
@@ -25,3 +28,5 @@
 - (void)setNeedsLayout:(BOOL)flag;
 
 @end
+
+#pragma clang diagnostic pop
