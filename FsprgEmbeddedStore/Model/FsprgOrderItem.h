@@ -7,9 +7,9 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import "FsprgFulfillment.h"
-#import "FsprgLicense.h"
-#import "FsprgFileDownload.h"
+#import <BWRegistration/FsprgFulfillment.h>
+#import <BWRegistration/FsprgLicense.h>
+#import <BWRegistration/FsprgFileDownload.h>
 
 
 /*!

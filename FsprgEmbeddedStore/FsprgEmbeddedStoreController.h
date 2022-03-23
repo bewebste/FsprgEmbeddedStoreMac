@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <WebKit/WebKit.h>
-#import "FsprgEmbeddedStoreDelegate.h"
+#import <BWRegistration/FsprgEmbeddedStoreDelegate.h>
 
 
 #pragma clang diagnostic push

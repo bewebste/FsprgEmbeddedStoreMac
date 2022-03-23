@@ -8,8 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 #import <WebKit/WebKit.h>
-#import "FsprgStoreParameters.h"
-#import "FsprgOrder.h"
+#import <BWRegistration/FsprgStoreParameters.h>
+#import <BWRegistration/FsprgOrder.h>
 
 /*! Type for didLoadPage:ofType: */
 typedef enum {
