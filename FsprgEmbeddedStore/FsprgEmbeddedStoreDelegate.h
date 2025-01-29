@@ -7,9 +7,12 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import <WebKit/WebKit.h>
+//#import <WebKit/WebKit.h>
 #import <BWRegistration/FsprgStoreParameters.h>
-#import <BWRegistration/FsprgOrder.h>
+
+@class WebView;
+@class WebFrame;
+@class FsprgOrder;
 
 /*! Type for didLoadPage:ofType: */
 typedef enum {
